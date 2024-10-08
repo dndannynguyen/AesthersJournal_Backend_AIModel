@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration; // Add this line
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -11,10 +12,8 @@ namespace GeminiAIChatTherapist.Controllers
     [Route("api/[controller]")]
     public class ChatController : ControllerBase
     {
-        private static readonly string API_KEY = ApiConfig.API_KEY; // Ensure ApiConfig.API_KEY is valid
-        private static readonly string API_URL = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}";
-        
-        // Initial prompt for the AI
+        private readonly string API_KEY; // Remove static
+        private readonly string API_URL; // Remove static
         private static readonly string InitialPrompt = @"
             You are a professional therapist engaging in a conversation with the user. Always reply with empathy, understanding, and encouragement. Keep your responses focused on the user's emotions and concerns most of the time, unless that is something casual (but must be formal), you should answer. If the user asks irrelevant or off-topic questions, politely steer the conversation back to their feelings and well-being. Avoid answering irrelevant or non-therapeutic questions. Keep responses short, supportive, and aligned with therapeutic principles.
             When you respond, just give the text in what the professional therapist would say, but keep the friendly vibe, like you are a human.
@@ -24,6 +23,12 @@ namespace GeminiAIChatTherapist.Controllers
 
         // Variable to store conversation history
         private static StringBuilder conversationHistory = new StringBuilder(InitialPrompt);
+
+        public ChatController(IConfiguration configuration) // Inject IConfiguration
+        {
+            API_KEY = configuration["API_KEY"]; // Load API_KEY from environment variable
+            API_URL = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"; // Set API_URL
+        }
 
         [HttpPost("send-message")]
         public async Task<IActionResult> SendMessage([FromBody] UserMessage userMessage)
