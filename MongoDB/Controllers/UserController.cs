@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
-using System.Threading.Tasks;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -17,8 +16,12 @@ public class UserController : ControllerBase
     [HttpPost("addUser")]
     public async Task<IActionResult> AddUser([FromBody] User user)
     {
-        await _mongoDBService.Users.InsertOneAsync(user);
-        return Ok("User added successfully");
+        if (ModelState.IsValid)
+        {
+            await _mongoDBService.Users.InsertOneAsync(user);
+            return Ok("User added successfully");
+        }
+        return BadRequest(ModelState);
     }
 
     // Get a user by userid
@@ -33,7 +36,16 @@ public class UserController : ControllerBase
     [HttpPut("updateUser/{userid}")]
     public async Task<IActionResult> UpdateUser(string userid, [FromBody] User updatedUser)
     {
-        var result = await _mongoDBService.Users.ReplaceOneAsync(u => u.UserId == userid, updatedUser);
+        var update = Builders<User>.Update
+            .Set(u => u.Email, updatedUser.Email)
+            .Set(u => u.Password, updatedUser.Password)
+            .Set(u => u.JournalEntries, updatedUser.JournalEntries);
+
+        var result = await _mongoDBService.Users.UpdateOneAsync(
+            u => u.UserId == userid,
+            update
+        );
+
         return result.ModifiedCount > 0 ? Ok("User updated") : NotFound("User not found");
     }
 
@@ -41,7 +53,22 @@ public class UserController : ControllerBase
     [HttpDelete("deleteUser/{userid}")]
     public async Task<IActionResult> DeleteUser(string userid)
     {
-        var result = await _mongoDBService.Users.DeleteOneAsync(u => u.UserId == userid);
-        return result.DeletedCount > 0 ? Ok("User deleted") : NotFound("User not found");
+        // Step 1: Delete all journal entries associated with the user
+        var deleteJournalEntriesResult = await _mongoDBService.JournalEntries
+            .DeleteManyAsync(j => j.UserId == userid);
+
+        // Step 2: Delete the user document
+        var deleteUserResult = await _mongoDBService.Users
+            .DeleteOneAsync(u => u.UserId == userid);
+
+        if (deleteUserResult.DeletedCount > 0)
+        {
+            return Ok($"User and {deleteJournalEntriesResult.DeletedCount} associated journal entries deleted successfully");
+        }
+        else
+        {
+            return NotFound("User not found");
+        }
     }
+
 }

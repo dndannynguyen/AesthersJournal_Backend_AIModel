@@ -1,6 +1,5 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using System.Collections.Generic;
 
 public class User
 {
@@ -18,5 +17,5 @@ public class User
     public string Password { get; set; }
 
     [BsonElement("journalEntryId")]
-    public List<string> JournalEntryIds { get; set; }
+    public List<string> JournalEntries { get; set; } = new List<string>();
 }
