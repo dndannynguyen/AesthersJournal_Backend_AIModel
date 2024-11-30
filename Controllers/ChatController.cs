@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration; // Add this line
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace GeminiAIChatTherapist.Controllers
 {
@@ -12,6 +13,7 @@ namespace GeminiAIChatTherapist.Controllers
     [Route("api/[controller]")]
     public class ChatController : ControllerBase
     {
+        private readonly ILogger<ChatController> _logger;
         private readonly string API_KEY; // Remove static
         private readonly string API_URL; // Remove static
         private static readonly string InitialPrompt = @"
@@ -24,11 +26,12 @@ namespace GeminiAIChatTherapist.Controllers
         // Variable to store conversation history
         private static StringBuilder conversationHistory = new StringBuilder(InitialPrompt);
 
-        public ChatController(IConfiguration configuration) // Inject IConfiguration
+        public ChatController(IConfiguration configuration, ILogger<ChatController> logger)
         {
             API_KEY = configuration["API_KEY"]; // Load API_KEY from environment variable
-            Console.WriteLine($"API_KEY: {API_KEY}"); // Log API_KEY
             API_URL = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"; // Set API_URL
+            _logger = logger;
+            _logger.LogInformation("API_KEY: {API_KEY}", API_KEY);
         }
 
         [HttpPost("send-message")]
@@ -91,6 +94,7 @@ namespace GeminiAIChatTherapist.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Exception occurred while generating AI response");
                 return $"Exception occurred: {ex.Message}";
             }
         }
