@@ -28,10 +28,9 @@ namespace GeminiAIChatTherapist.Controllers
 
         public ChatController(IConfiguration configuration, ILogger<ChatController> logger)
         {
-            API_KEY = configuration["API_KEY"]; // Load API_KEY from environment variable
+            API_KEY = "AIzaSyALMMFibRQTN32xepIkRYiiWq7_1Iwo6h4"; // Load API_KEY from environment variable
             API_URL = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"; // Set API_URL
             _logger = logger;
-            _logger.LogInformation("API_KEY: {API_KEY}", API_KEY);
         }
 
         [HttpPost("send-message")]
