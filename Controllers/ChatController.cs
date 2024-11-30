@@ -27,6 +27,7 @@ namespace GeminiAIChatTherapist.Controllers
         public ChatController(IConfiguration configuration) // Inject IConfiguration
         {
             API_KEY = configuration["API_KEY"]; // Load API_KEY from environment variable
+            Console.WriteLine($"API_KEY: {API_KEY}"); // Log API_KEY
             API_URL = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"; // Set API_URL
         }
 
